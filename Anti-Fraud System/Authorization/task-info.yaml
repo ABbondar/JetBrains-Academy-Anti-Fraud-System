@@ -709,6 +709,405 @@ files:
         };
     }
   learner_created: false
+- name: src/antifraud/controller/UserController.java
+  visible: true
+  text: |-
+    package antifraud.controller;
+
+    import antifraud.dto.UserDTO;
+    import antifraud.model.User;
+    import antifraud.service.UserService;
+    import lombok.RequiredArgsConstructor;
+    import lombok.extern.slf4j.Slf4j;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.validation.annotation.Validated;
+    import org.springframework.web.bind.annotation.*;
+
+    import java.util.Map;
+
+    @Slf4j
+    @RestController
+    @RequestMapping("/api/auth")
+    @RequiredArgsConstructor
+    public class UserController {
+
+        private final UserService userService;
+
+        @GetMapping("/list")
+        public ResponseEntity<?> getAllUsers() {
+            log.info("[GET] Request to read all users");
+
+            return ResponseEntity.ok(userService.getAll());
+        }
+
+        @PostMapping("/user")
+        public ResponseEntity<?> createUser(@Validated @RequestBody User user) {
+            log.info("[POST] Request to create user");
+
+            var newUser = userService.create(user);
+            return new ResponseEntity<>(UserDTO.mapToUserDTO(newUser), HttpStatus.CREATED);
+        }
+
+        @DeleteMapping("/user/{username}")
+        public ResponseEntity<?> deleteUserByUserName(@PathVariable String username) {
+            log.info("[DELETE] Request to delete user by username");
+
+            userService.delete(username);
+            return ResponseEntity.ok(Map.of(
+                    "username", username,
+                    "status", "Deleted successfully!"));
+        }
+    }
+  learner_created: true
+- name: src/antifraud/controller/TransactionController.java
+  visible: true
+  text: |-
+    package antifraud.controller;
+
+    import antifraud.model.Response;
+    import antifraud.model.Transaction;
+    import antifraud.service.impl.TransactionServiceImpl;
+    import lombok.RequiredArgsConstructor;
+    import lombok.extern.slf4j.Slf4j;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.*;
+
+    import javax.validation.Valid;
+
+    @Slf4j
+    @RestController
+    @RequestMapping("/api/antifraud")
+    @RequiredArgsConstructor
+    public class TransactionController {
+
+        private final TransactionServiceImpl transactionService;
+
+        @PostMapping("/transaction")
+        public ResponseEntity<?> verifyTransaction(@Valid @RequestBody Transaction transaction) {
+            log.info("[POST] Request to verify transaction");
+
+            var amount = transaction.getAmount();
+            if (amount == null || amount <= 0L) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+
+            var transactionStatus =
+                    transactionService.validateTransaction(amount);
+
+            return ResponseEntity.ok(new Response(transactionStatus.name()));
+        }
+    }
+  learner_created: true
+- name: src/antifraud/model/Role.java
+  visible: true
+  text: |-
+    package antifraud.model;
+
+    public enum Role {
+        USER, ADMIN
+    }
+  learner_created: true
+- name: src/antifraud/exception/UserExistsException.java
+  visible: true
+  text: |-
+    package antifraud.exception;
+
+
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.ResponseStatus;
+
+    @ResponseStatus(code = HttpStatus.CONFLICT, reason = "User exist!")
+    public class UserExistsException extends RuntimeException {
+    }
+  learner_created: true
+- name: src/antifraud/model/Transaction.java
+  visible: true
+  text: |-
+    package antifraud.model;
+
+    import lombok.*;
+
+    import javax.validation.constraints.Min;
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    public class Transaction {
+
+        @Min(value = 1)
+        private Long amount;
+    }
+  learner_created: true
+- name: src/antifraud/model/User.java
+  visible: true
+  text: |-
+    package antifraud.model;
+
+    import com.fasterxml.jackson.annotation.JsonIgnore;
+    import com.fasterxml.jackson.annotation.JsonProperty;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+    import org.springframework.security.core.GrantedAuthority;
+    import org.springframework.security.core.authority.SimpleGrantedAuthority;
+    import org.springframework.security.core.userdetails.UserDetails;
+
+    import javax.persistence.*;
+    import javax.validation.constraints.NotBlank;
+    import java.util.*;
+
+    @Entity
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @Table(name = "users")
+    public class User implements UserDetails {
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.AUTO)
+        @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+        private long id;
+
+        @NotBlank(message = "name is required")
+        private String name;
+
+        @NotBlank(message = "username is required")
+        private String username;
+
+        @NotBlank(message = "password is required")
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+        private String password;
+
+        @JsonIgnore
+        private boolean accountNonExpired;
+
+        @JsonIgnore
+        private boolean accountNonLocked;
+
+        @JsonIgnore
+        private boolean credentialsNonExpired;
+
+        @JsonIgnore
+        private boolean enabled;
+
+        @JsonIgnore
+        @Enumerated(EnumType.STRING)
+        @ElementCollection(fetch = FetchType.EAGER)
+        private List<Role> rolesAndAuthorities = new ArrayList<>();
+
+        @Override
+        public List<GrantedAuthority> getAuthorities() {
+            List<GrantedAuthority> authorities = new ArrayList<>();
+
+            rolesAndAuthorities
+                    .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.toString())));
+
+            return authorities;
+        }
+
+        public void grantAuthority(Role role) {
+            rolesAndAuthorities.add(role);
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return true;
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
+    }
+  learner_created: true
+- name: src/antifraud/model/Response.java
+  visible: true
+  text: |-
+    package antifraud.model;
+
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+    import lombok.NoArgsConstructor;
+    import lombok.Setter;
+
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    public class Response {
+        private String result;
+    }
+  learner_created: true
+- name: src/antifraud/dto/UserDTO.java
+  visible: true
+  text: |-
+    package antifraud.dto;
+
+    import antifraud.model.User;
+    import lombok.AllArgsConstructor;
+    import lombok.Getter;
+
+    @Getter
+    @AllArgsConstructor
+    public class UserDTO {
+        private long id;
+        private String name;
+        private String username;
+
+        public static UserDTO mapToUserDTO(User user) {
+
+            return new UserDTO(
+                    user.getId(),
+                    user.getName(),
+                    user.getUsername());
+        }
+    }
+  learner_created: true
+- name: src/antifraud/exception/UserNotFoundException.java
+  visible: true
+  text: |-
+    package antifraud.exception;
+
+    import org.springframework.http.HttpStatus;
+    import org.springframework.web.bind.annotation.ResponseStatus;
+
+    @ResponseStatus(code = HttpStatus.NOT_FOUND, reason = "User not found!")
+    public class UserNotFoundException extends RuntimeException {
+    }
+  learner_created: true
+- name: src/antifraud/configuration/RestAuthenticationEntryPoint.java
+  visible: true
+  text: |-
+    package antifraud.configuration;
+
+    import org.springframework.security.core.AuthenticationException;
+    import org.springframework.security.web.AuthenticationEntryPoint;
+    import org.springframework.stereotype.Component;
+
+    import javax.servlet.http.HttpServletRequest;
+    import javax.servlet.http.HttpServletResponse;
+    import java.io.IOException;
+
+    @Component
+    public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
+
+        @Override
+        public void commence(HttpServletRequest request,
+                             HttpServletResponse response,
+                             AuthenticationException authException) throws IOException {
+
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage());
+        }
+    }
+  learner_created: true
+- name: src/antifraud/service/impl/TransactionServiceImpl.java
+  visible: true
+  text: |-
+    package antifraud.service.impl;
+
+    import org.springframework.stereotype.Service;
+
+    @Service
+    public class TransactionServiceImpl {
+
+        public enum TransactionStatus {
+            ALLOWED, PROHIBITED, MANUAL_PROCESSING
+        }
+
+        public TransactionStatus validateTransaction(long amount) {
+            return amount <= 200L ? TransactionStatus.ALLOWED
+                    : amount <= 1500L ? TransactionStatus.MANUAL_PROCESSING
+                    : TransactionStatus.PROHIBITED;
+        }
+    }
+  learner_created: true
+- name: src/antifraud/service/impl/UserServiceImpl.java
+  visible: true
+  text: |-
+    package antifraud.service.impl;
+
+    import antifraud.dto.UserDTO;
+    import antifraud.exception.UserExistsException;
+    import antifraud.exception.UserNotFoundException;
+    import antifraud.model.Role;
+    import antifraud.model.User;
+    import antifraud.repository.UserRepository;
+    import antifraud.service.UserService;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+    import org.springframework.security.crypto.password.PasswordEncoder;
+    import org.springframework.stereotype.Service;
+    import org.springframework.transaction.annotation.Transactional;
+
+    import java.util.List;
+    import java.util.stream.Collectors;
+
+    @Service
+    @RequiredArgsConstructor
+    public class UserServiceImpl implements UserService, UserDetailsService {
+
+        private final UserRepository userRepository;
+
+        @Override
+        public List<UserDTO> getAll() {
+            return userRepository
+                    .findAll()
+                    .stream()
+                    .map(UserDTO::mapToUserDTO)
+                    .collect(Collectors.toList());
+        }
+
+        @Override
+        public User create(User user) {
+            if (userRepository
+                    .findAll()
+                    .stream()
+                    .anyMatch(u -> user.getUsername().equalsIgnoreCase(u.getUsername())))
+                throw new UserExistsException();
+
+            user.setUsername(user.getUsername().toLowerCase());
+            user.setPassword(encoder().encode(user.getPassword()));
+            user.grantAuthority(Role.USER);
+
+            return userRepository.save(user);
+        }
+
+        @Override
+        @Transactional
+        public void delete(String username) {
+            var user = userRepository
+                    .findByUsername(username.toLowerCase())
+                    .orElseThrow(UserNotFoundException::new);
+
+            userRepository.deleteUserByUsername(user.getUsername());
+        }
+
+        @Override
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            return userRepository
+                    .findByUsername(username.toLowerCase())
+                    .orElseThrow(UserNotFoundException::new);
+        }
+
+        protected PasswordEncoder encoder() {
+            return new BCryptPasswordEncoder(12);
+        }
+    }
+  learner_created: true
 feedback_link: https://hyperskill.org/learn/step/18069#comment
 status: Unchecked
-record: -1
+record: 3

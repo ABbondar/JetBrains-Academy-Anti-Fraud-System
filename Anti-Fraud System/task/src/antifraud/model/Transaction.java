@@ -4,7 +4,6 @@ import lombok.*;
 
 import javax.validation.constraints.Min;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
