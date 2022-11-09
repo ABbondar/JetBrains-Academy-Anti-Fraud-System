@@ -1,35 +1,34 @@
 package antifraud.controller;
 
-import antifraud.dto.TransactionResultDto;
+import antifraud.model.Response;
 import antifraud.model.Transaction;
-import antifraud.service.TransactionService;
+import antifraud.service.impl.TransactionServiceImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
-@RestController
 @Slf4j
+@RestController
+@RequestMapping("/api/antifraud")
+@RequiredArgsConstructor
 public class TransactionController {
 
-    private final TransactionService transactionService;
+    private final TransactionServiceImpl transactionService;
 
-    @Autowired
-    public TransactionController(TransactionService transactionService) {
-        this.transactionService = transactionService;
-    }
-
-    @PostMapping("/api/antifraud/transaction")
-    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/transaction")
     public ResponseEntity<?> verifyTransaction(@Valid @RequestBody Transaction transaction) {
+        log.info("[POST] Request to verify transaction");
 
-        TransactionResultDto dto =
-                new TransactionResultDto(
-                        transactionService.processTransaction(transaction).getResult());
+        var amount = transaction.getAmount();
+        if (amount == null || amount <= 0L) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
-        return ResponseEntity.ok().body(dto);
+        var transactionStatus =
+                transactionService.validateTransaction(amount);
+
+        return ResponseEntity.ok(new Response(transactionStatus.name()));
     }
 }

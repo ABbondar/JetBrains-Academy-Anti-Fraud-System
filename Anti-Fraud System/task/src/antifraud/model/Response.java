@@ -1,4 +1,4 @@
-package antifraud.dto;
+package antifraud.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,6 +9,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class TransactionResultDto {
+public class Response {
     private String result;
 }

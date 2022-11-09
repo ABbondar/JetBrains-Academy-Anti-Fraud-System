@@ -490,6 +490,132 @@ files:
         };
     }
   learner_created: false
+- name: src/antifraud/controller/TransactionController.java
+  visible: true
+  text: |-
+    package antifraud.controller;
+
+    import antifraud.dto.TransactionResultDto;
+    import antifraud.model.Transaction;
+    import antifraud.service.TransactionService;
+    import lombok.extern.slf4j.Slf4j;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
+    import org.springframework.web.bind.annotation.*;
+
+    import javax.validation.Valid;
+
+    @RestController
+    @Slf4j
+    public class TransactionController {
+
+        private final TransactionService transactionService;
+
+        @Autowired
+        public TransactionController(TransactionService transactionService) {
+            this.transactionService = transactionService;
+        }
+
+        @PostMapping("/api/antifraud/transaction")
+        @ResponseStatus(HttpStatus.CREATED)
+        public ResponseEntity<?> verifyTransaction(@Valid @RequestBody Transaction transaction) {
+
+            TransactionResultDto dto =
+                    new TransactionResultDto(
+                            transactionService.processTransaction(transaction).getResult());
+
+            return ResponseEntity.ok().body(dto);
+        }
+    }
+  learner_created: true
+- name: src/antifraud/model/Transaction.java
+  visible: true
+  text: |-
+    package antifraud.model;
+
+    import lombok.*;
+
+    import javax.validation.constraints.Min;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Getter
+    @Setter
+    public class Transaction {
+
+        @Min(value = 1)
+        private Long amount;
+    }
+  learner_created: true
+- name: src/antifraud/controller/UserController.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/model/Role.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/model/User.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/service/impl/TransactionServiceImpl.java
+  visible: true
+  text: |-
+    package antifraud.service;
+
+    import antifraud.exception.InvalidTransactionException;
+    import antifraud.model.Transaction;
+    import antifraud.model.TransactionResult;
+
+    import org.springframework.stereotype.Service;
+
+    @Service
+    public class TransactionService {
+
+        public TransactionResult processTransaction(Transaction transaction) {
+            TransactionResult tr = new TransactionResult();
+
+            if ((transaction.getAmount() == null) || (transaction.getAmount() <= 0)) {
+                throw new InvalidTransactionException("Invalid transaction amount");
+            }
+
+            if (transaction.getAmount() <= 200) {
+                tr.setResult("ALLOWED");
+
+            } else if (transaction.getAmount() <= 1500) {
+                tr.setResult("MANUAL_PROCESSING");
+
+            } else {
+                tr.setResult("PROHIBITED");
+            }
+            return tr;
+        }
+    }
+  learner_created: true
+- name: src/antifraud/service/impl/UserServiceImpl.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/exception/UserNotFoundException.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/configuration/RestAuthenticationEntryPoint.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/model/Response.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/dto/UserDTO.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/exception/UserExistsException.java
+  visible: true
+  learner_created: true
+- name: service_db.mv.db
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/learn/step/18068#comment
-status: Unchecked
-record: -1
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Wed, 09 Nov 2022 16:54:30 UTC
+record: 2
