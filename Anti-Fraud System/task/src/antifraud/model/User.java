@@ -66,23 +66,27 @@ public class User implements UserDetails {
         rolesAndAuthorities.add(role);
     }
 
+    public String getRole() {
+        return rolesAndAuthorities.get(0).name();
+    }
+
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return accountNonExpired;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return accountNonLocked;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;
+        return credentialsNonExpired;
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

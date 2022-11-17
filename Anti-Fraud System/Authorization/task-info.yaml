@@ -1108,6 +1108,27 @@ files:
         }
     }
   learner_created: true
+- name: src/antifraud/dto/RoleDTO.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/exception/RoleNotFoundException.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/exception/RoleExistsException.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/exception/OperationNotFoundException.java
+  visible: true
+  learner_created: true
+- name: src/antifraud/dto/AccessDTO.java
+  visible: true
+  learner_created: true
+- name: service_db.mv.db
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/learn/step/18069#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Thu, 17 Nov 2022 12:01:01 UTC
 record: 3

@@ -3,7 +3,7 @@ hyperskill_project:
   ide_files: https://stepik.org/media/attachments/lesson/657120/additional_files.json
   is_template_based: false
   use_ide: true
-update_date: Wed, 09 Nov 2022 12:10:01 UTC
+update_date: Thu, 17 Nov 2022 09:53:53 UTC
 stages:
 - id: 1161
   step: 18067
@@ -13,7 +13,7 @@ stages:
   is_completed: true
 - id: 1163
   step: 18069
-  is_completed: false
+  is_completed: true
 - id: 1164
   step: 18070
   is_completed: false
@@ -61,8 +61,6 @@ topics:
     theory_id: 14641
   - title: Spring components
     theory_id: 14652
-  - title: Spring Security Crypto
-    theory_id: 21866
   - title: HTTP messages
     theory_id: 6752
   - title: Introduction to Spring Web MVC
@@ -73,6 +71,10 @@ topics:
     theory_id: 7834
   - title: Postman
     theory_id: 8512
+  - title: Insecure Cryptographic Storage
+    theory_id: 20069
+  - title: Spring Security Crypto
+    theory_id: 21866
   - title: Getting data from REST
     theory_id: 13287
   - title: Posting and deleting data via REST

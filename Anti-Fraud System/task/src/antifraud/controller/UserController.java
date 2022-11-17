@@ -1,5 +1,7 @@
 package antifraud.controller;
 
+import antifraud.dto.RoleDTO;
+import antifraud.dto.AccessDTO;
 import antifraud.dto.UserDTO;
 import antifraud.model.User;
 import antifraud.service.UserService;
@@ -33,6 +35,26 @@ public class UserController {
 
         var newUser = userService.create(user);
         return new ResponseEntity<>(UserDTO.mapToUserDTO(newUser), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/role")
+    public ResponseEntity<?> updateUser(@Validated @RequestBody RoleDTO role) {
+        log.info("[UPDATE] Request to update user");
+
+        var updatedUser = userService.update(role);
+        return new ResponseEntity<>(UserDTO.mapToUserDTO(updatedUser), HttpStatus.OK);
+    }
+
+    @PutMapping("/access")
+    public ResponseEntity<?> accessUser(@Validated @RequestBody AccessDTO operation) {
+        log.info("[UPDATE] Request to change access settings for user");
+
+        var user = userService.access(operation);
+        return ResponseEntity.ok(Map.of(
+                "status", "User "
+                        + user.getUsername()
+                        + " "
+                        + operation.getOperation().toLowerCase() + "ed!"));
     }
 
     @DeleteMapping("/user/{username}")
