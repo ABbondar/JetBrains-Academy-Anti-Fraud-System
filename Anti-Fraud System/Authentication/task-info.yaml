@@ -610,9 +610,6 @@ files:
 - name: src/antifraud/exception/UserExistsException.java
   visible: true
   learner_created: true
-- name: service_db.mv.db
-  visible: true
-  learner_created: true
 feedback_link: https://hyperskill.org/learn/step/18068#comment
 status: Solved
 feedback:

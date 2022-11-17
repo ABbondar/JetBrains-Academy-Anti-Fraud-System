@@ -1,8 +1,9 @@
 package antifraud.service.impl;
 
+import antifraud.dto.RoleDTO;
+import antifraud.dto.AccessDTO;
 import antifraud.dto.UserDTO;
-import antifraud.exception.UserExistsException;
-import antifraud.exception.UserNotFoundException;
+import antifraud.exception.*;
 import antifraud.model.Role;
 import antifraud.model.User;
 import antifraud.repository.UserRepository;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,9 +46,63 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         user.setUsername(user.getUsername().toLowerCase());
         user.setPassword(encoder().encode(user.getPassword()));
-        user.grantAuthority(Role.USER);
 
+        if (userRepository.findAll().isEmpty()) {
+
+            user.grantAuthority(Role.ADMINISTRATOR);
+            user.setAccountNonExpired(true);
+            user.setAccountNonLocked(true);
+            user.setCredentialsNonExpired(true);
+            user.setEnabled(true);
+
+        } else {
+            user.grantAuthority(Role.MERCHANT);
+        }
         return userRepository.save(user);
+    }
+
+    @Override
+    public User update(RoleDTO role) {
+        List<Role> roles = new ArrayList<>();
+
+        var u = userRepository
+                .findByUsername(role.getUsername().toLowerCase())
+                .orElseThrow(UserNotFoundException::new);
+
+        if (u.getRole().equals(role.getRole())) {
+            throw new RoleExistsException();
+
+        } else if (role.getRole().equalsIgnoreCase(Role.MERCHANT.toString())
+                || role.getRole().equalsIgnoreCase(Role.SUPPORT.toString())) {
+
+            roles.add(Role.valueOf(role.getRole().toUpperCase()));
+            u.setRolesAndAuthorities(roles);
+            return userRepository.save(u);
+        }
+        throw new RoleNotFoundException();
+    }
+
+    @Override
+    public User access(AccessDTO operation) {
+        var user = userRepository
+                .findByUsername(operation.getUsername().toLowerCase())
+                .orElseThrow(UserNotFoundException::new);
+
+        if (operation.getOperation().equalsIgnoreCase("unlock")) {
+            user.setAccountNonExpired(true);
+            user.setAccountNonLocked(true);
+            user.setCredentialsNonExpired(true);
+            user.setEnabled(true);
+            return userRepository.save(user);
+
+        } else if (operation.getOperation().equalsIgnoreCase("lock")) {
+            user.setAccountNonExpired(false);
+            user.setAccountNonLocked(false);
+            user.setCredentialsNonExpired(false);
+            user.setEnabled(false);
+            return userRepository.save(user);
+        }
+        throw new OperationNotFoundException();
     }
 
     @Override
