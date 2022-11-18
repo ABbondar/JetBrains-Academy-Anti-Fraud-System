@@ -10,5 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Response {
-    private String result;
+    private TransactionStatus result;
+    private String info;
 }

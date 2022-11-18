@@ -46,7 +46,7 @@ public class UserController {
     }
 
     @PutMapping("/access")
-    public ResponseEntity<?> accessUser(@Validated @RequestBody AccessDTO operation) {
+    public ResponseEntity<?> updateAccess(@Validated @RequestBody AccessDTO operation) {
         log.info("[UPDATE] Request to change access settings for user");
 
         var user = userService.access(operation);
