@@ -49,25 +49,11 @@ public class User implements UserDetails {
 
     @JsonIgnore
     @Enumerated(EnumType.STRING)
-    @ElementCollection(fetch = FetchType.EAGER)
-    private List<Role> rolesAndAuthorities = new ArrayList<>();
+    private Role role;
 
     @Override
-    public List<GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-
-        rolesAndAuthorities
-                .forEach(role -> authorities.add(new SimpleGrantedAuthority(role.toString())));
-
-        return authorities;
-    }
-
-    public void grantAuthority(Role role) {
-        rolesAndAuthorities.add(role);
-    }
-
-    public String getRole() {
-        return rolesAndAuthorities.get(0).name();
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(role);
     }
 
     @Override

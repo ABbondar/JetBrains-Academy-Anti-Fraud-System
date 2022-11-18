@@ -40,6 +40,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.PUT, "/api/auth/role/**").hasAuthority("ADMINISTRATOR")
                 .antMatchers(HttpMethod.PUT, "/api/auth/access/**").hasAuthority("ADMINISTRATOR")
                 .antMatchers(HttpMethod.DELETE, "/api/auth/**").hasAuthority("ADMINISTRATOR")
+                .antMatchers(HttpMethod.GET, "/api/antifraud/suspicious-ip/**", "/api/antifraud/stolencard/**").hasAuthority("SUPPORT")
+                .antMatchers(HttpMethod.POST, "/api/antifraud/suspicious-ip/**", "/api/antifraud/stolencard/**").hasAuthority("SUPPORT")
+                .antMatchers(HttpMethod.DELETE, "/api/antifraud/suspicious-ip/**", "/api/antifraud/stolencard/**").hasAuthority("SUPPORT")
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS);

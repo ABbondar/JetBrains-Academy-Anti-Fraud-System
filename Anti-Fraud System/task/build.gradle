@@ -21,6 +21,7 @@ dependencies {
     implementation group: 'org.hibernate', name: 'hibernate-validator', version: '6.1.0.Final'
     implementation group: 'com.h2database', name: 'h2', version: '1.4.200'
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    implementation group: 'commons-validator', name: 'commons-validator', version: '1.6'
 
     annotationProcessor 'org.projectlombok:lombok'
     compileOnly 'org.projectlombok:lombok'

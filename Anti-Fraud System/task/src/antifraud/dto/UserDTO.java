@@ -13,11 +13,10 @@ public class UserDTO {
     private String role;
 
     public static UserDTO mapToUserDTO(User user) {
-
         return new UserDTO(
                 user.getId(),
                 user.getName(),
                 user.getUsername(),
-                user.getRole());
+                user.getRole().name());
     }
 }

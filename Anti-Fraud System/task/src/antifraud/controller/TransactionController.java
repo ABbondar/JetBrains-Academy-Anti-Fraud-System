@@ -1,6 +1,5 @@
 package antifraud.controller;
 
-import antifraud.model.Response;
 import antifraud.model.Transaction;
 import antifraud.service.impl.TransactionServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +25,8 @@ public class TransactionController {
         var amount = transaction.getAmount();
         if (amount == null || amount <= 0L) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 
-        var transactionStatus =
-                transactionService.validateTransaction(amount);
+        var response = transactionService.validateTransaction(transaction);
 
-        return ResponseEntity.ok(new Response(transactionStatus.name()));
+        return ResponseEntity.ok(response);
     }
 }

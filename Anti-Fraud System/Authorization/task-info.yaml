@@ -1123,9 +1123,6 @@ files:
 - name: src/antifraud/dto/AccessDTO.java
   visible: true
   learner_created: true
-- name: service_db.mv.db
-  visible: true
-  learner_created: true
 feedback_link: https://hyperskill.org/learn/step/18069#comment
 status: Solved
 feedback:

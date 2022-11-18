@@ -1,5 +1,12 @@
 package antifraud.model;
 
-public enum Role {
-    ADMINISTRATOR, MERCHANT, SUPPORT
+import org.springframework.security.core.GrantedAuthority;
+
+public enum Role implements GrantedAuthority {
+    ADMINISTRATOR, MERCHANT, SUPPORT;
+
+    @Override
+    public String getAuthority() {
+        return name();
+    }
 }

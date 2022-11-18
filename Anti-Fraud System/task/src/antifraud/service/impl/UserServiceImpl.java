@@ -3,7 +3,11 @@ package antifraud.service.impl;
 import antifraud.dto.RoleDTO;
 import antifraud.dto.AccessDTO;
 import antifraud.dto.UserDTO;
-import antifraud.exception.*;
+import antifraud.exception.operation.OperationNotFoundException;
+import antifraud.exception.role.RoleExistsException;
+import antifraud.exception.role.RoleNotFoundException;
+import antifraud.exception.user.UserExistsException;
+import antifraud.exception.user.UserNotFoundException;
 import antifraud.model.Role;
 import antifraud.model.User;
 import antifraud.repository.UserRepository;
@@ -17,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,8 +32,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public List<UserDTO> getAll() {
-        return userRepository
-                .findAll()
+        return userRepository.findAll()
                 .stream()
                 .map(UserDTO::mapToUserDTO)
                 .collect(Collectors.toList());
@@ -38,8 +40,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public User create(User user) {
-        if (userRepository
-                .findAll()
+        if (userRepository.findAll()
                 .stream()
                 .anyMatch(u -> user.getUsername().equalsIgnoreCase(u.getUsername())))
             throw new UserExistsException();
@@ -49,43 +50,39 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         if (userRepository.findAll().isEmpty()) {
 
-            user.grantAuthority(Role.ADMINISTRATOR);
+            user.setRole(Role.ADMINISTRATOR);
             user.setAccountNonExpired(true);
             user.setAccountNonLocked(true);
             user.setCredentialsNonExpired(true);
             user.setEnabled(true);
 
         } else {
-            user.grantAuthority(Role.MERCHANT);
+            user.setRole(Role.MERCHANT);
         }
         return userRepository.save(user);
     }
 
     @Override
     public User update(RoleDTO role) {
-        List<Role> roles = new ArrayList<>();
 
-        var u = userRepository
-                .findByUsername(role.getUsername().toLowerCase())
+        var user = userRepository.findByUsername(role.getUsername().toLowerCase())
                 .orElseThrow(UserNotFoundException::new);
 
-        if (u.getRole().equals(role.getRole())) {
+        if (user.getRole().name().equals(role.getRole())) {
             throw new RoleExistsException();
 
         } else if (role.getRole().equalsIgnoreCase(Role.MERCHANT.toString())
                 || role.getRole().equalsIgnoreCase(Role.SUPPORT.toString())) {
 
-            roles.add(Role.valueOf(role.getRole().toUpperCase()));
-            u.setRolesAndAuthorities(roles);
-            return userRepository.save(u);
+            user.setRole(Role.valueOf(role.getRole().toUpperCase()));
+            return userRepository.save(user);
         }
         throw new RoleNotFoundException();
     }
 
     @Override
     public User access(AccessDTO operation) {
-        var user = userRepository
-                .findByUsername(operation.getUsername().toLowerCase())
+        var user = userRepository.findByUsername(operation.getUsername().toLowerCase())
                 .orElseThrow(UserNotFoundException::new);
 
         if (operation.getOperation().equalsIgnoreCase("unlock")) {
@@ -108,17 +105,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     @Transactional
     public void delete(String username) {
-        var user = userRepository
-                .findByUsername(username.toLowerCase())
+        var user = userRepository.findByUsername(username.toLowerCase())
                 .orElseThrow(UserNotFoundException::new);
-
         userRepository.deleteUserByUsername(user.getUsername());
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository
-                .findByUsername(username.toLowerCase())
+        return userRepository.findByUsername(username.toLowerCase())
                 .orElseThrow(UserNotFoundException::new);
     }
 
