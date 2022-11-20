@@ -1,7 +1,6 @@
 package antifraud.service.impl;
 
 import antifraud.dto.IpDTO;
-import antifraud.exception.ip.IpExistsException;
 import antifraud.exception.ip.IpNotFoundException;
 import antifraud.exception.ip.IpNotValidException;
 import antifraud.model.Ip;
@@ -9,8 +8,10 @@ import antifraud.repository.IpRepository;
 import antifraud.service.IpService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.validator.routines.InetAddressValidator;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ public class IpServiceImpl implements IpService {
         if (ipRepository.findAll()
                 .stream()
                 .anyMatch(i -> ip.getIpAddress().equals(i.getIpAddress()))) {
-            throw new IpExistsException();
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
         }
         return ipRepository.save(ip);
     }
