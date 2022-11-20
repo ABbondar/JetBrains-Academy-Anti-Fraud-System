@@ -3,16 +3,15 @@ package antifraud.service.impl;
 import antifraud.dto.RoleDTO;
 import antifraud.dto.AccessDTO;
 import antifraud.dto.UserDTO;
-import antifraud.exception.operation.OperationNotFoundException;
-import antifraud.exception.role.RoleExistsException;
-import antifraud.exception.role.RoleNotFoundException;
-import antifraud.exception.user.UserExistsException;
+import antifraud.exception.operation.OperationNotSupportException;
+import antifraud.exception.role.RoleNotSupportException;
 import antifraud.exception.user.UserNotFoundException;
 import antifraud.model.Role;
 import antifraud.model.User;
 import antifraud.repository.UserRepository;
 import antifraud.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +43,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (userRepository.findAll()
                 .stream()
                 .anyMatch(u -> user.getUsername().equalsIgnoreCase(u.getUsername())))
-            throw new UserExistsException();
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
 
         user.setUsername(user.getUsername().toLowerCase());
         user.setPassword(encoder().encode(user.getPassword()));
@@ -69,7 +69,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
                 .orElseThrow(UserNotFoundException::new);
 
         if (user.getRole().name().equals(role.getRole())) {
-            throw new RoleExistsException();
+            throw new ResponseStatusException(HttpStatus.CONFLICT);
 
         } else if (role.getRole().equalsIgnoreCase(Role.MERCHANT.toString())
                 || role.getRole().equalsIgnoreCase(Role.SUPPORT.toString())) {
@@ -77,7 +77,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             user.setRole(Role.valueOf(role.getRole().toUpperCase()));
             return userRepository.save(user);
         }
-        throw new RoleNotFoundException();
+        throw new RoleNotSupportException();
     }
 
     @Override
@@ -99,7 +99,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             user.setEnabled(false);
             return userRepository.save(user);
         }
-        throw new OperationNotFoundException();
+        throw new OperationNotSupportException();
     }
 
     @Override

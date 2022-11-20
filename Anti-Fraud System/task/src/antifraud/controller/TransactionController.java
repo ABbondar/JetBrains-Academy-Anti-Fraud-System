@@ -19,14 +19,19 @@ public class TransactionController {
     private final TransactionServiceImpl transactionService;
 
     @PostMapping("/transaction")
-    public ResponseEntity<?> verifyTransaction(@Valid @RequestBody Transaction transaction) {
-        log.info("[POST] Request to verify transaction");
+    public ResponseEntity<?> processTransaction(@Valid @RequestBody Transaction transaction) {
+        log.info("[POST] Request to process transaction");
 
         var amount = transaction.getAmount();
         if (amount == null || amount <= 0L) return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-
-        var response = transactionService.validateTransaction(transaction);
-
+        var response = transactionService.processTransaction(transaction);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/transaction")
+    public ResponseEntity<?> getAllTransactions() {
+        log.info("[POST] Request to read all transactions");
+
+        return ResponseEntity.ok(transactionService.getAll());
     }
 }

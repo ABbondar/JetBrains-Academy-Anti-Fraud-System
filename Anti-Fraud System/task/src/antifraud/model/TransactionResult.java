@@ -9,7 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Response {
+public class TransactionResult {
     private TransactionStatus result;
     private String info;
 }
