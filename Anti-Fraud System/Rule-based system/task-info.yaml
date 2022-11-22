@@ -2348,12 +2348,9 @@ files:
     public class RoleNotFoundException extends RuntimeException {
     }
   learner_created: true
-- name: service_db.mv.db
-  visible: true
-  learner_created: true
 feedback_link: https://hyperskill.org/learn/step/18071#comment
 status: Solved
 feedback:
   message: Congratulations!
   time: Sun, 20 Nov 2022 18:36:09 UTC
-record: -1
+record: 5
