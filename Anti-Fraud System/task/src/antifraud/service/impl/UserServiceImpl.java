@@ -64,7 +64,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public User update(RoleDTO role) {
-
         var user = userRepository.findByUsername(role.getUsername().toLowerCase())
                 .orElseThrow(UserNotFoundException::new);
 

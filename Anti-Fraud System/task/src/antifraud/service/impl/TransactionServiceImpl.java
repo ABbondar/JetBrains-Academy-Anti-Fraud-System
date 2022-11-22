@@ -1,10 +1,9 @@
 package antifraud.service.impl;
 
+import antifraud.exception.transaction.TransactionNotFoundException;
 import antifraud.exception.transaction.TransactionNotValidException;
-import antifraud.model.Region;
-import antifraud.model.TransactionResult;
-import antifraud.model.Transaction;
-import antifraud.model.TransactionStatus;
+import antifraud.model.*;
+import antifraud.repository.LimitRepository;
 import antifraud.repository.CardRepository;
 import antifraud.repository.IpRepository;
 import antifraud.repository.TransactionRepository;
@@ -12,7 +11,9 @@ import antifraud.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,6 +25,24 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final IpRepository ipRepository;
     private final CardRepository cardRepository;
+    private final LimitRepository limitRepository;
+
+    private final LimitServiceImpl limitService;
+
+    @Override
+    public List<Transaction> getAll() {
+        return new ArrayList<>(transactionRepository.findAll());
+    }
+
+    @Override
+    public List<Transaction> getAll(String cardNumber) {
+        if (!isCardNumberValid(cardNumber)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
+
+        return transactionRepository.findAllByCardNumber(cardNumber)
+                .orElseThrow(TransactionNotFoundException::new);
+    }
 
     @Override
     public TransactionResult processTransaction(Transaction transaction) {
@@ -75,12 +94,24 @@ public class TransactionServiceImpl implements TransactionService {
                 ? status == TransactionStatus.MANUAL_PROCESSING ? "amount" : "none"
                 : violations.stream().sorted().collect(Collectors.joining(", "));
 
+        Transaction updatedWithStatus = transactionRepository.findById(transaction.getTransactionId())
+                .orElseThrow(TransactionNotFoundException::new);
+
+        updatedWithStatus.setStatus(status.name());
+        save(updatedWithStatus);
+
         return new TransactionResult(status, info);
     }
 
     @Override
-    public List<Transaction> getAll() {
-        return new ArrayList<>(transactionRepository.findAll());
+    public Transaction processTransactionWithFeedback(Feedback request) {
+        limitService.updateLimit(request);
+
+        var t = transactionRepository.findById(request.getTransactionId())
+                .orElseThrow(TransactionNotFoundException::new);
+
+        t.setFeedback(request.getFeedback());
+        return save(t);
     }
 
     @Override
@@ -92,11 +123,21 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private TransactionStatus getTransactionStatus(Transaction transaction) {
-        return transaction.getAmount() <= 200L
-                ? TransactionStatus.ALLOWED
-                : transaction.getAmount() <= 1500L
-                ? TransactionStatus.MANUAL_PROCESSING
-                : TransactionStatus.PROHIBITED;
+        if (limitRepository.findAll().isEmpty()) {
+            return transaction.getAmount()
+                    <= 200
+                    ? TransactionStatus.ALLOWED : transaction.getAmount()
+
+                    <= 1500
+                    ? TransactionStatus.MANUAL_PROCESSING : TransactionStatus.PROHIBITED;
+        } else {
+            return transaction.getAmount()
+                    <= limitService.getAllowedLimit(transaction.getCardNumber())
+                    ? TransactionStatus.ALLOWED : transaction.getAmount()
+
+                    <= limitService.getManualLimit(transaction.getCardNumber())
+                    ? TransactionStatus.MANUAL_PROCESSING : TransactionStatus.PROHIBITED;
+        }
     }
 
     private int uniqueIpDuringOneHour(Transaction transaction) {
@@ -145,22 +186,17 @@ public class TransactionServiceImpl implements TransactionService {
                 .anyMatch(card -> transaction.getCardNumber().equals(card.getNumber()));
     }
 
-    private static boolean isTransactionValid(Transaction transaction) {
+    private boolean isTransactionValid(Transaction transaction) {
         return isIpAddressValid(transaction.getIpAddress())
-                && isCardNumberValid(transaction.getCardNumber())
-                && isRegionValid(transaction.getRegion());
+                && isCardNumberValid(transaction.getCardNumber());
     }
 
-    private static boolean isIpAddressValid(String ipAddress) {
+    private boolean isIpAddressValid(String ipAddress) {
         InetAddressValidator validator = InetAddressValidator.getInstance();
         return validator.isValidInet4Address(ipAddress);
     }
 
-    private static boolean isCardNumberValid(String number) {
+    private boolean isCardNumberValid(String number) {
         return LuhnCheckDigit.LUHN_CHECK_DIGIT.isValid(number);
-    }
-
-    private static boolean isRegionValid(String region) {
-        return Region.getRegions().contains(region);
     }
 }

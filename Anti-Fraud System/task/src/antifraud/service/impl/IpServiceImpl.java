@@ -56,7 +56,7 @@ public class IpServiceImpl implements IpService {
         ipRepository.deleteIpByIpAddress(ip.getIpAddress());
     }
 
-    private static boolean validateIpAddress(String ipAddress) {
+    private boolean validateIpAddress(String ipAddress) {
         InetAddressValidator validator = InetAddressValidator.getInstance();
         return !validator.isValidInet4Address(ipAddress);
     }
